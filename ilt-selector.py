@@ -7,12 +7,13 @@ import pprint
 
 random.seed('Rover Ruckus')
 
+INF = math.inf
 MAX_PENALTY = drive_distance.biggest_drive()
 
 leagues = ['A1', 'A2', 'B', 'C1', 'C2', 'D', 'F1', 'F2', 'PE', 'I'] # Deal with O
 
 # ILT Host leagues will never play each other
-HOST_PENALTY = 10.0 * MAX_PENALTY
+
 hosts = ['C2', 'F1', 'F2', 'I']
 
 nonhosts = [l for l in leagues if l not in hosts]
@@ -25,25 +26,32 @@ previous_seasons = [
     [('A1', 'A2'), ('C1', 'C2'), ('B', 'PE'), ('F1', 'F2'), ('D', 'I')]
 ]
 
+def allpairs(xs):
+    for x in itertools.combinations(xs, 2):
+        yield tuple(sorted(x))
 
 def generate_pairings():
-    all_pairs = [tuple(sorted(x)) for x in itertools.combinations(leagues, 2)]
+    all_pairs = list(allpairs(leagues))
 
     weight = dict((x, drive_distance.distance(*x)) for x in all_pairs)
 
-    for a, b in zip(hosts[::2], hosts[1::2]):
-        t = tuple(sorted([a, b]))
-        weight[t] = weight.get(t, 0.0) + HOST_PENALTY
-
+    disallowed = set()
     for past, season in enumerate(previous_seasons[:3]):
         for previous in season:
-            for pair in itertools.combinations(previous, 2):
-                spair = tuple(sorted(pair))
-                weight[spair] = float("inf")
+            for pair in allpairs(previous):
+                disallowed.add(pair)
 
     def score(tup):
-        return sum(weight.get(tuple(sorted(x)), 0.0)
-                   for x in itertools.combinations(tup,2))
+        if any(x in disallowed for x in allpairs(tup)):
+            return INF
+        if any(x in hosts for x in tup):
+            return sum(weight.get(tuple(sorted(x)), 0.0)
+                       for x in itertools.combinations(tup,2))
+        else:
+            # If it's a no-home-league tournament, use the closer of
+            # Monrovia or Palmdale
+            return min(sum(weight.get(tuple(sorted(['C2', x])), 0.0) for x in tup),
+                       sum(weight.get(tuple(sorted(['I', x])), 0.0) for x in tup))
 
     best = float("inf")
     winner = None
