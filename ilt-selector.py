@@ -115,7 +115,11 @@ for game in ('Rover Ruckus', '2020', '2021', '2022', '2023', '2024', '2025'):
     previous_seasons = [winner] + previous_seasons
     print('%s:' % game)
 
-    for pair in winner:
-        teams = sum(league_sizes[x] for x in pair)
-        num_adv = round(REGIONALS_TEAMS * teams / TOTAL_TEAMS)
-        print('\t- %s (%d teams, %d advance)' % (','.join(str(x) for x in pair), teams, num_adv))
+    if winner is None:
+        print('No ILTs possible given current rules and leagues')
+        break
+    else:
+        for pair in winner:
+            teams = sum(league_sizes[x] for x in pair)
+            num_adv = round(REGIONALS_TEAMS * teams / TOTAL_TEAMS)
+            print('\t- %s (%d teams, %d advance)' % (','.join(str(x) for x in pair), teams, num_adv))
