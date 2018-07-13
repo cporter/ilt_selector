@@ -3,8 +3,13 @@
 Chooses ILTs based on the following criteria:
 
 - Do not allow repeats within a four year window
-- Minimize driving distance for all teams
-- Allow for a small league (O) that must be in a group of three
+- Make sure qualifying matches can finish on time assuming the following:
+  - 5 matches per team
+  - 5 minute match times
+  - Qualifying matches start at 10:30
+  - One hour lunch break
+  - Qualifying matches end at 3:30
+- Minimize driving distance for the region as a whole
 
 Usage: `python3 ilt-selector.py`
 
