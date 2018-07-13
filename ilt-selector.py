@@ -114,7 +114,7 @@ for game in ('Rover Ruckus', '2020', '2021', '2022', '2023', '2024', '2025'):
     winner = generate_pairings()
     previous_seasons = [winner] + previous_seasons
     print('%s:' % game)
-    
+
     for pair in winner:
         teams = sum(league_sizes[x] for x in pair)
         num_adv = round(REGIONALS_TEAMS * teams / TOTAL_TEAMS)
