@@ -48,6 +48,9 @@ previous_seasons = [
     [('A1', 'I'), ('A2', 'D'), ('B', 'C2'), ('C1', 'F1', 'O'), ('F2', 'PE')],
     # Velocity Vortex
     [('A1', 'A2'), ('C1', 'C2'), ('B', 'PE'), ('F1', 'F2'), ('D', 'I')],
+    # PE and A1 both have their last league meet on the same weekend as the
+    # Perris ILT's this year. Throw in a ghost ILT to make sure they don't
+    # get scheduled there during Rover Ruckus.
     [('F1', 'F2', 'PE', 'A1')]
 ]
 
