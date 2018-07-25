@@ -4,26 +4,31 @@ import itertools
 import random
 import drive_distance
 import pprint
+import os
+
+show_advancement_estimates = os.getenv('SHOW_ADVANCEMENT_ESTIMATES') is not None
 
 random.seed('Rover Ruckus')
 
 INF = math.inf
 MAX_PENALTY = drive_distance.biggest_drive()
 
+REPEAT_BARIER = 3
+
 leagues = ['A1', 'A2', 'B', 'C1', 'C2', 'D', 'F1', 'F2', 'PE', 'I'] # Deal with O
 
 league_sizes = {
-    'A1': 18, # 15,
+    'A1': 17, # 15,
     'A2': 16, # 12,
-    'B':  13, # 12,
-    'C1': 11,
+    'B':  14, # 12,
+    'C1': 12,
     'C2': 15,
     'D':  15, # 16,
     'PE': 15, # 12, #
     'F1': 14,
-    'F2': 10, # 12,
+    'F2': 12, # 12,
     'I':  14, # 15,
-    'O':  9 # + 2
+    'O':  10 # + 2
 }
 
 REGIONALS_TEAMS = 48
@@ -47,11 +52,10 @@ previous_seasons = [
     # Relic Recovery
     [('A1', 'I'), ('A2', 'D'), ('B', 'C2'), ('C1', 'F1', 'O'), ('F2', 'PE')],
     # Velocity Vortex
-    [('A1', 'A2'), ('C1', 'C2'), ('B', 'PE'), ('F1', 'F2'), ('D', 'I')],
     # PE and A1 both have their last league meet on the same weekend as the
     # Perris ILT's this year. Throw in a ghost ILT to make sure they don't
     # get scheduled there during Rover Ruckus.
-    [('F1', 'F2', 'PE', 'A1')]
+    [('A1', 'A2'), ('C1', 'C2'), ('B', 'PE'), ('F1', 'F2'), ('D', 'I'), ('F1', 'F2', 'PE', 'A1')]
 ]
 
 def allpairs(xs):
@@ -67,7 +71,7 @@ def generate_pairings():
     # Disallow repeats within 4 years, as that's how long the mode student
     # participates in FTC. So teams that start in middle school and stick
     # around through high school may get a repeat.
-    for past, season in enumerate(previous_seasons[:3]):
+    for past, season in enumerate(previous_seasons[:REPEAT_BARIER]):
         for previous in season:
             for pair in allpairs(previous):
                 disallowed.add(pair)
@@ -99,12 +103,11 @@ def generate_pairings():
             if s < best:
                 best = s
                 winner = ps
-    print ('Checked %d combinations' % combinations)
     return winner
 
 winner = generate_pairings()
 
-oldg = ['Date Overlap', 'Velocity Vortex', 'Relic Recovery']
+oldg = ['Velocity Vortex', 'Relic Recovery']
 for game, winner in zip(oldg, reversed(previous_seasons)):
     print('%s:' % game)
     for pair in winner:
@@ -113,13 +116,16 @@ for game, winner in zip(oldg, reversed(previous_seasons)):
 for game in ('Rover Ruckus', '2020', '2021', '2022', '2023', '2024', '2025'):
     winner = generate_pairings()
     previous_seasons = [winner] + previous_seasons
-    print('%s:' % game)
 
     if winner is None:
-        print('No ILTs possible given current rules and leagues')
+        print('{game}: No ILTs possible given current rules and leagues'.format(game = game))
         break
     else:
+        print('%s:' % game)
         for pair in winner:
             teams = sum(league_sizes[x] for x in pair)
             num_adv = round(REGIONALS_TEAMS * teams / TOTAL_TEAMS)
-            print('\t- %s (%d teams, %d advance)' % (','.join(str(x) for x in pair), teams, num_adv))
+            if show_advancement_estimates:
+                print('\t- %s (%d teams, %d advance)' % (','.join(str(x) for x in pair), teams, num_adv))
+            else:
+                print('\t- %s (%d teams)' % (','.join(str(x) for x in pair), teams))
