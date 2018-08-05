@@ -5,6 +5,7 @@ import random
 import drive_distance
 import pprint
 import os
+import copy
 
 show_advancement_estimates = os.getenv('SHOW_ADVANCEMENT_ESTIMATES') is not None
 
@@ -31,6 +32,8 @@ league_sizes = {
     'O':  10 # + 2
 }
 
+
+
 REGIONALS_TEAMS = 48
 TOTAL_TEAMS = sum(league_sizes.values())
 
@@ -44,18 +47,47 @@ MAX_ILT_SIZE = AVAILABLE_MATCH_TIME / ((5./4.) * PER_MATCH_TIME)
 # ILT Host leagues will never play each other
 
 hosts = ['C2', 'F1', 'F2', 'I']
-
 nonhosts = [l for l in leagues if l not in hosts]
+althosts = ['C2', 'I'] # hosts for the one tournament at which the "host" team does not play
+
+class ILT(object):
+    def __init__(self, host, teams):
+        self.host = host
+        self.teams = list(teams)
+
+    def pushTeam(self, t):
+        self.teams.append(t)
+
+    def popTeam(self):
+        self.teams.pop()
+
+    def __repr__(self):
+        return '%s (at %s, %d teams)' % (', '.join(self.teams),
+                                         self.host,
+                                         sum(league_sizes[x] for x in self.teams))
+
+def makeILT(host, *teams):
+    return ILT(host, list(teams))
 
 # Discourage repeats of the previous years
 previous_seasons = [
-    # Relic Recovery
-    [('A1', 'I'), ('A2', 'D'), ('B', 'C2'), ('C1', 'F1', 'O'), ('F2', 'PE')],
+    # Relic Recover
+    [makeILT('I', 'A1', 'I'),
+     makeILT('I', 'A2', 'D'),
+     makeILT('C2', 'B', 'C2'),
+     makeILT('F1', 'C1', 'F1', 'O'),
+     makeILT('F2', 'F2', 'PE')],
     # Velocity Vortex
+    [makeILT('F1', 'A1', 'A2'),
+     makeILT('F2', 'F1', 'F2'),
+     makeILT('C2', 'C1', 'C2'),
+     makeILT('I', 'D', 'I'),
+     makeILT('PE', 'B', 'PE')],
+    # Res-Q
     # PE and A1 both have their last league meet on the same weekend as the
     # Perris ILT's this year. Throw in a ghost ILT to make sure they don't
     # get scheduled there during Rover Ruckus.
-    [('A1', 'A2'), ('C1', 'C2'), ('B', 'PE'), ('F1', 'F2'), ('D', 'I'), ('F1', 'F2', 'PE', 'A1')]
+    [makeILT('F2', 'F1', 'F2', 'PE', 'A1')]
 ]
 
 def allpairs(xs):
@@ -65,7 +97,16 @@ def allpairs(xs):
 def generate_pairings():
     all_pairs = list(allpairs(leagues))
 
-    weight = dict((x, drive_distance.distance(*x)) for x in all_pairs)
+    weight = {}
+    for host in hosts:
+        weight[(host, host)] = 0.0
+        weight[(host, 'O')] = drive_distance.distance(host, 'O')
+        for nonhost in nonhosts:
+            weight[(host, nonhost)] = drive_distance.distance(host, nonhost)
+        for otherhost in hosts:
+            if otherhost != host:
+                # Just in case. This shouldn't happen.
+                weight[(host, otherhost)] = INF
 
     disallowed = set()
     # Disallow repeats within 4 years, as that's how long the mode student
@@ -73,45 +114,40 @@ def generate_pairings():
     # around through high school may get a repeat.
     for past, season in enumerate(previous_seasons[:REPEAT_BARIER]):
         for previous in season:
-            for pair in allpairs(previous):
+            for pair in allpairs(previous.teams):
                 disallowed.add(pair)
 
-    def score(tup):
-        if any(x in disallowed for x in allpairs(tup)):
+    def score(ilt):
+        host, teams = ilt.host, ilt.teams
+        if any(x in disallowed for x in allpairs(teams)):
             return INF
-        if MAX_ILT_SIZE <= sum(league_sizes[x] for x in tup):
+        if MAX_ILT_SIZE <= sum(league_sizes[x] for x in teams):
             return INF
-        if any(x in hosts for x in tup):
-            return sum(weight.get(tuple(sorted(x)), 0.0)
-                       for x in itertools.combinations(tup,2))
-        else:
-            # If it's a no-home-league tournament, use the closer of
-            # Monrovia or Palmdale
-            return min(sum(weight.get(tuple(sorted(['C2', x])), 0.0) for x in tup),
-                       sum(weight.get(tuple(sorted(['I', x])), 0.0) for x in tup))
-
-    combinations = 0
-    best = float("inf")
+        return sum(weight[(host, team)] for team in teams)
+    
+    best = INF
     winner = None
     for nhs in itertools.permutations(nonhosts):
-        combinations = 1 + combinations
-        pairs = list(zip(list(nhs[:1]) + hosts, nhs[1:]))
-        for i in range(len(pairs)):
-            ps = list(pairs)
-            ps[i] = tuple(ps[i] + tuple('O'))
-            s = sum(score(p) for p in ps)
-            if s < best:
-                best = s
-                winner = ps
+        for althost in althosts:
+            locations = hosts + [althost]
+            pairs = list(zip(hosts + list(nhs[:1]), nhs[1:]))
+            ilts = [ILT(loc, teams) for (loc, teams) in zip(locations, pairs)]
+            for i in range(len(ilts)):
+                ilts[i].pushTeam('O')
+                s = sum(score(ilt) for ilt in ilts)
+                if s < best:
+                    best = s
+                    winner = copy.deepcopy(ilts)
+                ilts[i].popTeam()
     return winner
 
 winner = generate_pairings()
 
-oldg = ['Velocity Vortex', 'Relic Recovery']
+oldg = ['Res-Q', 'Velocity Vortex', 'Relic Recovery']
 for game, winner in zip(oldg, reversed(previous_seasons)):
     print('%s:' % game)
-    for pair in winner:
-        print('\t- %s (%d teams)' % (','.join(str(x) for x in pair), sum(league_sizes[x] for x in pair)))
+    for ilt in winner:
+        print('\t- %s' % ilt)
 
 for game in ('Rover Ruckus', '2020', '2021', '2022', '2023', '2024', '2025'):
     winner = generate_pairings()
@@ -122,10 +158,12 @@ for game in ('Rover Ruckus', '2020', '2021', '2022', '2023', '2024', '2025'):
         break
     else:
         print('%s:' % game)
-        for pair in winner:
-            teams = sum(league_sizes[x] for x in pair)
-            num_adv = round(REGIONALS_TEAMS * teams / TOTAL_TEAMS)
-            if show_advancement_estimates:
-                print('\t- %s (%d teams, %d advance)' % (','.join(str(x) for x in pair), teams, num_adv))
-            else:
-                print('\t- %s (%d teams)' % (','.join(str(x) for x in pair), teams))
+        for ilt in winner:
+            print('\t- %s' % ilt)
+#         for pair in winner:
+#             teams = sum(league_sizes[x] for x in pair)
+#             num_adv = round(REGIONALS_TEAMS * teams / TOTAL_TEAMS)
+#             if show_advancement_estimates:
+#                 print('\t- %s (%d teams, %d advance)' % (','.join(str(x) for x in pair), teams, num_adv))
+#             else:
+#                 print('\t- %s (%d teams)' % (','.join(str(x) for x in pair), teams))
