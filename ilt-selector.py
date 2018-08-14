@@ -19,21 +19,28 @@ REPEAT_BARIER = 5
 leagues = ['A1', 'A2', 'B', 'C1', 'C2', 'D', 'F1', 'F2', 'PE', 'I', 'V', 'O']
 
 league_sizes = {
-    'A1': 14, # 15,
-    'A2': 16, # 12,
-    'B':  15, # 12,
+    'A1': 14,
+    'A2': 16,
+    'B':  15,
     'C1': 13,
     'C2': 15,
-    'D':  15, # 16,
-    'PE': 15, # 12, #
+    'D':  15,
+    'PE': 15,
     'F1': 14,
-    'F2': 16, # 12,
-    'I':  14, # 15,
-    'O':  10, # + 2
+    'F2': 16,
+    'I':  14,
+    'O':  10,
     'V':   7
 }
 
-
+host_names = {
+    'B': 'Compton',
+    'C2': 'Monrovia',
+    'F1': 'Perris',
+    'F2': 'Perris',
+    'I': 'Palmdale',
+    'PE': 'Diamond Ranch'
+}
 
 REGIONALS_TEAMS = 48
 TOTAL_TEAMS = sum(league_sizes.values())
@@ -65,7 +72,7 @@ class ILT(object):
 
     def __repr__(self):
         return '%s (at %s, %d teams)' % (', '.join(self.teams),
-                                         self.host,
+                                         host_names.get(self.host, self.host),
                                          sum(league_sizes[x] for x in self.teams))
 
 def makeILT(host, *teams):
