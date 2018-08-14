@@ -14,22 +14,23 @@ random.seed('Rover Ruckus')
 INF = math.inf
 MAX_PENALTY = drive_distance.biggest_drive()
 
-REPEAT_BARIER = 3
+REPEAT_BARIER = 5
 
-leagues = ['A1', 'A2', 'B', 'C1', 'C2', 'D', 'F1', 'F2', 'PE', 'I'] # Deal with O
+leagues = ['A1', 'A2', 'B', 'C1', 'C2', 'D', 'F1', 'F2', 'PE', 'I', 'V', 'O']
 
 league_sizes = {
-    'A1': 17, # 15,
+    'A1': 14, # 15,
     'A2': 16, # 12,
-    'B':  14, # 12,
-    'C1': 12,
+    'B':  15, # 12,
+    'C1': 13,
     'C2': 15,
     'D':  15, # 16,
     'PE': 15, # 12, #
     'F1': 14,
-    'F2': 12, # 12,
+    'F2': 16, # 12,
     'I':  14, # 15,
-    'O':  10 # + 2
+    'O':  10, # + 2
+    'V':   7
 }
 
 
@@ -49,6 +50,7 @@ MAX_ILT_SIZE = AVAILABLE_MATCH_TIME / ((5./4.) * PER_MATCH_TIME)
 hosts = ['C2', 'F1', 'F2', 'I']
 nonhosts = [l for l in leagues if l not in hosts]
 althosts = ['C2', 'I'] # hosts for the one tournament at which the "host" team does not play
+locations = ['C2', 'F1', 'F2', 'I', 'I', 'C2']
 
 class ILT(object):
     def __init__(self, host, teams):
@@ -107,7 +109,7 @@ def generate_pairings():
             if otherhost != host:
                 # Just in case. This shouldn't happen.
                 weight[(host, otherhost)] = INF
-
+                
     disallowed = set()
     # Disallow repeats within 4 years, as that's how long the mode student
     # participates in FTC. So teams that start in middle school and stick
@@ -128,17 +130,18 @@ def generate_pairings():
     best = INF
     winner = None
     for nhs in itertools.permutations(nonhosts):
-        for althost in althosts:
-            locations = hosts + [althost]
-            pairs = list(zip(hosts + list(nhs[:1]), nhs[1:]))
-            ilts = [ILT(loc, teams) for (loc, teams) in zip(locations, pairs)]
-            for i in range(len(ilts)):
-                ilts[i].pushTeam('O')
-                s = sum(score(ilt) for ilt in ilts)
-                if s < best:
-                    best = s
-                    winner = copy.deepcopy(ilts)
-                ilts[i].popTeam()
+        side_a = hosts + list(nhs[:2])
+        side_b = nhs[2:]
+        if len(side_a) != len(side_b):
+            raise 'WHOA'
+        pairs = zip(side_a, side_b)
+        # pairs = list(zip(hosts + list(nhs[:1]), nhs[1:]))
+        ilts = [ILT(loc, teams) for (loc, teams) in zip(locations, pairs)]
+        # print(ilts)
+        s = sum(score(ilt) for ilt in ilts)
+        if s < best:
+            best = s
+            winner = copy.deepcopy(ilts)
     return winner
 
 winner = generate_pairings()
