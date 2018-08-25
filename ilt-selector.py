@@ -14,7 +14,7 @@ random.seed('Rover Ruckus')
 INF = math.inf
 MAX_PENALTY = drive_distance.biggest_drive()
 
-REPEAT_BARIER = 5
+REPEAT_BARIER = 3
 
 leagues = ['A1', 'A2', 'B', 'C1', 'C2', 'D', 'F1', 'F2', 'PE', 'I', 'V', 'O']
 
