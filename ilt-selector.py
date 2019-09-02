@@ -98,12 +98,7 @@ previous_seasons = [
      makeILT('F2', 'F1', 'F2'),
      makeILT('C2', 'C1', 'C2'),
      makeILT('I', 'D', 'I'),
-     makeILT('PE', 'B', 'PE')],
-    # Res-Q
-    # PE and A1 both have their last league meet on the same weekend as the
-    # Perris ILT's this year. Throw in a ghost ILT to make sure they don't
-    # get scheduled there during Rover Ruckus.
-    [makeILT('F2', 'F1', 'F2', 'PE', 'A1')]
+     makeILT('PE', 'B', 'PE')]
 ]
 
 def allpairs(xs):
@@ -160,7 +155,7 @@ def generate_pairings():
 
 winner = generate_pairings()
 
-oldg = ['Res-Q', 'Velocity Vortex', 'Relic Recovery', 'Rover Ruckus']
+oldg = ['Velocity Vortex', 'Relic Recovery', 'Rover Ruckus']
 for game, winner in zip(oldg, reversed(previous_seasons)):
     print('%s:' % game)
     for ilt in winner:
