@@ -19,18 +19,18 @@ REPEAT_BARIER = 3
 leagues = ['A1', 'A2', 'B', 'C1', 'C2', 'D', 'F1', 'F2', 'PE', 'I', 'V', 'O']
 
 league_sizes = {
-    'A1': 14,
-    'A2': 16,
-    'B':  15,
-    'C1': 13,
-    'C2': 15,
-    'D':  15,
+    'A1': 16,
+    'A2': 17,
+    'B':  18,
+    'C1': 17,
+    'C2': 18,
+    'D':  14,
     'PE': 15,
     'F1': 14,
-    'F2': 16,
-    'I':  14,
-    'O':  10,
-    'V':   7
+    'F2': 15,
+    'I':  15,
+    'O':  12,
+    'V':  10
 }
 
 host_names = {
@@ -80,6 +80,13 @@ def makeILT(host, *teams):
 
 # Discourage repeats of the previous years
 previous_seasons = [
+    # Rover Ruckus
+    [makeILT('C2', 'C2', 'A1'),
+     makeILT('C2', 'C1', 'PE'),
+     makeILT('I', 'I', 'A2'),
+     makeILT('I', 'D', 'V'),
+     makeILT('F1', 'F1', 'B'),
+     makeILT('F2', 'F2', 'O')],
     # Relic Recover
     [makeILT('I', 'A1', 'I'),
      makeILT('I', 'A2', 'D'),
@@ -153,13 +160,13 @@ def generate_pairings():
 
 winner = generate_pairings()
 
-oldg = ['Res-Q', 'Velocity Vortex', 'Relic Recovery']
+oldg = ['Res-Q', 'Velocity Vortex', 'Relic Recovery', 'Rover Ruckus']
 for game, winner in zip(oldg, reversed(previous_seasons)):
     print('%s:' % game)
     for ilt in winner:
         print('\t- %s' % ilt)
 
-for game in ('Rover Ruckus', '2020', '2021', '2022', '2023', '2024', '2025'):
+for game in ('Skystone', '2021', '2022', '2023', '2024', '2025'):
     winner = generate_pairings()
     previous_seasons = [winner] + previous_seasons
 
